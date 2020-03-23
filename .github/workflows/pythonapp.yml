@@ -37,10 +37,10 @@ jobs:
         # pytest
 
         # ①検査件数等.xlsx
-        wget "https://drive.google.com/open?id=10s45RoczcdCb_C9Fs_ZaUCGFJxOXDvJz-VxfOmcKJso" -O inspections.xlsx
+        wget "https://drive.google.com/open?id=1dhjaRyKGFai_rOHjmdjrQq2rtpG5UKq8" -O inspections.xlsx
 
         # ②陽性者情報.xlsx
-        wget "https://drive.google.com/open?id=13c1jgUh-3Z_GpI8jM7PRm32KRHe5oxm2A6QldSlQ7wI" -O patients.xlsx
+        wget "https://drive.google.com/open?id=1ElxGwoKobfUkBaryPu1o5bnkWx2iUdHc" -O patients.xlsx
 
         pip install -r requirements.txt
         python3 main.py
