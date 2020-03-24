@@ -88,7 +88,7 @@ class DataJson:
             "date": self.last_update,
             "data": []
         }
-        for i in range(5, self.patients_count):
+        for i in range(2, self.patients_count):
             data = {}
             release_date = excel_date(self.patients_sheet.cell(row=i, column=2).value)
             data["No"] = self.patients_sheet.cell(row=i, column=1).value
