@@ -36,12 +36,5 @@ jobs:
         # pip install pytest
         # pytest
 
-        # DL参考 https://qiita.com/namakemono/items/c963e75e0af3f7eed732
-        # ①検査件数等.xlsx
-        wget "https://drive.google.com/uc?export=download&id=1dhjaRyKGFai_rOHjmdjrQq2rtpG5UKq8" -O inspections.xlsx
-
-        # ②陽性者情報.xlsx
-        wget "https://drive.google.com/uc?export=download&id=1ElxGwoKobfUkBaryPu1o5bnkWx2iUdHc" -O patients.xlsx
-
         pip install -r requirements.txt
         python3 main.py

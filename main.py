@@ -1,75 +1,46 @@
-import openpyxl
-import codecs
+from datetime import datetime, timedelta
 
-from datetime import datetime, timedelta, timezone
-from json import dumps
+from util import MAIN_SUMMARY_INIT, excel_date, get_xlsx, jst, dumps_json
 
 from typing import Dict
 
 
-jst = timezone(timedelta(hours=9), 'JST')
-
-MAIN_SUMMARY_INIT = {
-    "attr": "検査実施人数",
-    "value": 0,
-    "children": [
-        {
-            "attr": "陽性患者数",
-            "value": 0,
-            "children": [
-                {
-                    "attr": "入院／入院調整中",
-                    "value": 0,
-                    "children": [
-                        {
-                            "attr": "軽症・中等症",
-                            "value": 0
-                        },
-                        {
-                            "attr": "重症",
-                            "value": 0
-                        }
-                    ]
-                },
-                {
-                    "attr": "退院",
-                    "value": 0
-                },
-                {
-                    "attr": "死亡",
-                    "value": 0
-                }
-            ]
-        }
-    ]
-}
-
-
-def excel_date(num) -> datetime:
-    return datetime(1899, 12, 30) + timedelta(days=num, hours=8)
-
-
-def dumps_json(file_name: str, json_data: Dict) -> None:
-    with codecs.open("./data/" + file_name, "w", "utf-8") as f:
-        f.write(dumps(json_data, ensure_ascii=False, indent=4, separators=(',', ': ')))
-
-
 class DataJson:
     def __init__(self):
-        self.patients_sheet = openpyxl.load_workbook("patients.xlsx")["Sheet1"]
-        self.inspections_sheet = openpyxl.load_workbook("inspections.xlsx")["モトデータ"]
-        self.summary_sheet = openpyxl.load_workbook("inspections.xlsx")["総括表"]
+        self.patients_file = get_xlsx(
+            "https://drive.google.com/uc?export=download&id=1ElxGwoKobfUkBaryPu1o5bnkWx2iUdHc", "patients.xlsx"
+        )
+        self.patients_sheet = self.patients_file["Sheet1"]
+        self.inspections_file = get_xlsx(
+            "https://drive.google.com/uc?export=download&id=1dhjaRyKGFai_rOHjmdjrQq2rtpG5UKq8", "inspections.xlsx"
+        )
+        self.inspections_sheet = self.inspections_file["モトデータ"]
+        self.main_summary_sheet = self.inspections_file["総括表"]
+        self.contacts1_file = get_xlsx(
+            "https://drive.google.com/uc?export=download&id=15npvK-QtfEO2InjWNVHqv3v_VezJ5OGo", "contacts1.xlsx"
+        )
+        self.contacts1_sheet = self.contacts1_file["Sheet1"]
+        self.contacts2_file = get_xlsx(
+            "https://drive.google.com/uc?export=download&id=15u90SUhRnKTp-xF3JdyaqMERDZ_T0LEg", "contact2.xlsx"
+        )
+        self.contacts2_sheet = self.contacts2_file["Sheet1"]
         self.patients_count = 2
         self.inspections_count = 3
+        self.contacts1_count = 3
+        self.contacts2_count = 4
         self._data_json = {}
         self._patients_json = {}
         self._patients_summary_json = {}
         self._inspections_summary_json = {}
+        self._contacts1_summary_json = {}
+        self._contacts2_summary_json = {}
         self._treated_summary_json = {}
         self._main_summary_json = {}
         self.last_update = str(datetime.today().astimezone(jst).strftime("%Y/%m/%d %H:%M"))
         self.get_patients()
         self.get_inspections()
+        self.get_contacts1()
+        self.get_contacts2()
 
     def data_json(self):
         if not self._data_json:
@@ -90,6 +61,16 @@ class DataJson:
         if not self._inspections_summary_json:
             self.make_inspections_summary()
         return self._inspections_summary_json
+
+    def contacts1_summary_json(self) -> Dict:
+        if not self._contacts1_summary_json:
+            self.make_contacts1_summary()
+        return self._contacts1_summary_json
+
+    def contacts2_summary_json(self) -> Dict:
+        if not self._contacts2_summary_json:
+            self.make_contacts2_summary()
+        return self._contacts2_summary_json
 
     def treated_summary_json(self) -> Dict:
         if not self._treated_summary_json:
@@ -114,7 +95,7 @@ class DataJson:
             data["曜日"] = self.patients_sheet.cell(row=i, column=2).value
             data["居住地"] = self.patients_sheet.cell(row=i, column=5).value
             if not self.patients_sheet.cell(row=i, column=6).value == "―":
-                data["居住地"] += " " + self.patients_sheet.cell(row=i, column=6).value
+                data["居住地"] += self.patients_sheet.cell(row=i, column=6).value
             data["年代"] = str(self.patients_sheet.cell(row=i, column=3).value) + (
                 "代" if isinstance(self.patients_sheet.cell(row=i, column=3).value, int) else ""
             )
@@ -148,30 +129,34 @@ class DataJson:
             data["小計"] = self.inspections_sheet.cell(row=i, column=2).value
             self._inspections_summary_json["data"].append(data)
 
-    def make_discharges(self) -> None:
-        pass
+    def make_contacts1_summary(self) -> None:
+        self._contacts1_summary_json = {
+            "date": self.last_update,
+            "data": []
+        }
 
-    def make_main_summary(self) -> None:
-        self._main_summary_json = MAIN_SUMMARY_INIT
-        all_inspections = 0
-        all_patients = 0
-        all_discharges = 0
-        for i in range(3, self.inspections_count):
-            all_inspections += self.inspections_sheet.cell(row=i, column=2).value
-            all_patients += self.inspections_sheet.cell(row=i, column=3).value
-            all_discharges += self.inspections_sheet.cell(row=i, column=9).value
-        self._main_summary_json["value"] = all_inspections
-        self._main_summary_json["children"][0]["value"] = all_patients
-        self._main_summary_json["children"][0]["children"][0]["value"] = (
-                all_patients - self.summary_sheet.cell(row=6, column=9).value
-        )
-        self._main_summary_json["children"][0]["children"][0]["children"][0]["value"] = \
-            self.summary_sheet.cell(row=6, column=8).value
-        self._main_summary_json["children"][0]["children"][0]["children"][1]["value"] = \
-            self.summary_sheet.cell(row=6, column=7).value
-        self._main_summary_json["children"][0]["children"][1]["value"] = all_discharges
-        self._main_summary_json["children"][0]["children"][2]["value"] = \
-            self.summary_sheet.cell(row=6, column=10).value
+        for i in range(3, self.contacts1_count):
+            data = {}
+            date = self.contacts1_sheet.cell(row=i, column=1).value + timedelta(hours=8)
+            data["日付"] = date.isoformat() + ".000Z"
+            data["小計"] = self.contacts1_sheet.cell(row=i, column=2).value
+            self._contacts1_summary_json["data"].append(data)
+
+    def make_contacts2_summary(self) -> None:
+        self._contacts2_summary_json = {
+            "date": self.last_update,
+            "data": {
+                "府管轄保健所": [],
+                "政令中核市保健所": []
+            },
+            "labels": []
+        }
+
+        for i in range(4, self.contacts2_count):
+            date = self.contacts2_sheet.cell(row=i, column=1).value
+            self._contacts2_summary_json["data"]["府管轄保健所"].append(self.contacts1_sheet.cell(row=i, column=2).value)
+            self._contacts2_summary_json["data"]["政令中核市保健所"].append(self.contacts2_sheet.cell(row=i, column=3).value)
+            self._contacts2_summary_json["labels"].append(date.strftime("%m/%d"))
 
     def make_treated_summary(self) -> None:
         self._treated_summary_json = {
@@ -186,11 +171,35 @@ class DataJson:
             data["小計"] = self.inspections_sheet.cell(row=i, column=9).value
             self._treated_summary_json["data"].append(data)
 
+    def make_main_summary(self) -> None:
+        self._main_summary_json = MAIN_SUMMARY_INIT
+        all_inspections = 0
+        all_patients = 0
+        all_discharges = 0
+        for i in range(3, self.inspections_count):
+            all_inspections += self.inspections_sheet.cell(row=i, column=2).value
+            all_patients += self.inspections_sheet.cell(row=i, column=3).value
+            all_discharges += self.inspections_sheet.cell(row=i, column=9).value
+        self._main_summary_json["value"] = all_inspections
+        self._main_summary_json["children"][0]["value"] = all_patients
+        self._main_summary_json["children"][0]["children"][0]["value"] = (
+                all_patients - self.main_summary_sheet.cell(row=6, column=9).value
+        )
+        self._main_summary_json["children"][0]["children"][0]["children"][0]["value"] = \
+            self.main_summary_sheet.cell(row=6, column=8).value
+        self._main_summary_json["children"][0]["children"][0]["children"][1]["value"] = \
+            self.main_summary_sheet.cell(row=6, column=7).value
+        self._main_summary_json["children"][0]["children"][1]["value"] = all_discharges
+        self._main_summary_json["children"][0]["children"][2]["value"] = \
+            self.main_summary_sheet.cell(row=6, column=10).value
+
     def make_data(self) -> None:
         self._data_json = {
             "patients": self.patients_json(),
             "patients_summary": self.patients_summary_json(),
             "inspections_summary": self.inspections_summary_json(),
+            "contacts1_summary": self.contacts1_summary_json(),
+            "contacts2_summary": self.contacts2_summary_json(),
             "treated_summary": self.treated_summary_json(),
             "lastUpdate": self.last_update,
             "main_summary": self.main_summary_json()
@@ -208,6 +217,20 @@ class DataJson:
             self.inspections_count += 1
             value = self.inspections_sheet.cell(row=self.inspections_count, column=1).value
             if value == "計":
+                break
+
+    def get_contacts1(self) -> None:
+        while self.contacts1_sheet:
+            self.contacts1_count += 1
+            value = self.contacts1_sheet.cell(row=self.contacts1_count, column=1).value
+            if not value:
+                break
+
+    def get_contacts2(self) -> None:
+        while self.contacts2_sheet:
+            self.contacts2_count += 1
+            value = self.contacts2_sheet.cell(row=self.contacts2_count, column=1).value
+            if not value:
                 break
 
 
