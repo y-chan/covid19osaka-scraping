@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 
+import config
 from util import MAIN_SUMMARY_INIT, excel_date, get_xlsx, jst, dumps_json
 
 from typing import Dict
@@ -8,20 +9,20 @@ from typing import Dict
 class DataJson:
     def __init__(self):
         self.patients_file = get_xlsx(
-            "https://drive.google.com/uc?export=download&id=1ElxGwoKobfUkBaryPu1o5bnkWx2iUdHc", "patients.xlsx"
+            config.patients_xlsx, "patients.xlsx"
         )
         self.patients_sheet = self.patients_file["Sheet1"]
         self.inspections_file = get_xlsx(
-            "https://drive.google.com/uc?export=download&id=1dhjaRyKGFai_rOHjmdjrQq2rtpG5UKq8", "inspections.xlsx"
+            config.inspections_xlsx, "inspections.xlsx"
         )
         self.inspections_sheet = self.inspections_file["モトデータ"]
         self.main_summary_sheet = self.inspections_file["総括表"]
         self.contacts1_file = get_xlsx(
-            "https://drive.google.com/uc?export=download&id=15npvK-QtfEO2InjWNVHqv3v_VezJ5OGo", "contacts1.xlsx"
+            config.contacts1_xlsx, "contacts1.xlsx"
         )
         self.contacts1_sheet = self.contacts1_file["Sheet1"]
         self.contacts2_file = get_xlsx(
-            "https://drive.google.com/uc?export=download&id=15u90SUhRnKTp-xF3JdyaqMERDZ_T0LEg", "contact2.xlsx"
+            config.contacts2_xlsx, "contact2.xlsx"
         )
         self.contacts2_sheet = self.contacts2_file["Sheet1"]
         self.patients_count = 2
