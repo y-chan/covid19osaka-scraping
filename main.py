@@ -8,24 +8,22 @@ from typing import Dict
 
 class DataJson:
     def __init__(self):
-        self.patients_file = get_xlsx(
-            config.patients_xlsx, "patients.xlsx"
+        # self.patients_file = get_xlsx(config.patients_xlsx, "patients.xlsx")
+        self.patients_and_inspections_file = get_xlsx(
+            config.patients_and_inspections_xlsx, "patients_and_inspections.xlsx"
         )
-        self.patients_sheet = self.patients_file["Sheet1"]
-        self.inspections_file = get_xlsx(
-            config.inspections_xlsx, "inspections.xlsx"
-        )
-        self.inspections_sheet = self.inspections_file["モトデータ"]
-        self.main_summary_sheet = self.inspections_file["総括表"]
-        self.contacts1_file = get_xlsx(
-            config.contacts1_xlsx, "contacts1.xlsx"
-        )
+        # self.patients_sheet = self.patients_file["Sheet1"]
+        # self.inspections_file = get_xlsx(config.inspections_xlsx, "inspections.xlsx")
+        # self.inspections_sheet = self.inspections_file["モトデータ"]
+        # self.main_summary_sheet = self.inspections_file["総括表"]
+        self.patients_sheet = self.patients_and_inspections_file["【公開OK】府HP用(陽性者ベース)"]
+        self.inspections_sheet = self.patients_and_inspections_file["【公開OK】コロナサイト用（日付ベース）"]
+        self.main_summary_sheet = self.patients_and_inspections_file["【公開OK】ピポット集計"]
+        self.contacts1_file = get_xlsx(config.contacts1_xlsx, "contacts1.xlsx")
         self.contacts1_sheet = self.contacts1_file["Sheet1"]
-        self.contacts2_file = get_xlsx(
-            config.contacts2_xlsx, "contact2.xlsx"
-        )
+        self.contacts2_file = get_xlsx(config.contacts2_xlsx, "contact2.xlsx")
         self.contacts2_sheet = self.contacts2_file["Sheet1"]
-        self.patients_count = 2
+        self.patients_count = 3
         self.inspections_count = 3
         self.contacts1_count = 3
         self.contacts2_count = 4
@@ -88,15 +86,15 @@ class DataJson:
             "date": self.last_update,
             "data": []
         }
-        for i in range(2, self.patients_count):
+        for i in range(3, self.patients_count):
             data = {}
             release_date = excel_date(self.patients_sheet.cell(row=i, column=2).value)
             data["No"] = self.patients_sheet.cell(row=i, column=1).value
             data["リリース日"] = release_date.isoformat() + ".000Z"
             data["曜日"] = self.patients_sheet.cell(row=i, column=2).value
             data["居住地"] = self.patients_sheet.cell(row=i, column=5).value
-            if not self.patients_sheet.cell(row=i, column=6).value == "―":
-                data["居住地"] += self.patients_sheet.cell(row=i, column=6).value
+            if self.patients_sheet.cell(row=i, column=5).value != "大阪府外":
+                data["居住地"] = "大阪府" + data["居住地"]
             data["年代"] = str(self.patients_sheet.cell(row=i, column=3).value) + (
                 "代" if isinstance(self.patients_sheet.cell(row=i, column=3).value, int) else ""
             )
@@ -155,7 +153,7 @@ class DataJson:
 
         for i in range(4, self.contacts2_count):
             date = self.contacts2_sheet.cell(row=i, column=1).value
-            self._contacts2_summary_json["data"]["府管轄保健所"].append(self.contacts1_sheet.cell(row=i, column=2).value)
+            self._contacts2_summary_json["data"]["府管轄保健所"].append(self.contacts2_sheet.cell(row=i, column=2).value)
             self._contacts2_summary_json["data"]["政令中核市保健所"].append(self.contacts2_sheet.cell(row=i, column=3).value)
             self._contacts2_summary_json["labels"].append(date.strftime("%m/%d"))
 
@@ -169,7 +167,7 @@ class DataJson:
             data = {}
             date = excel_date(self.inspections_sheet.cell(row=i, column=1).value)
             data["日付"] = date.isoformat() + ".000Z"
-            data["小計"] = self.inspections_sheet.cell(row=i, column=9).value
+            data["小計"] = self.inspections_sheet.cell(row=i, column=8).value
             self._treated_summary_json["data"].append(data)
 
     def make_main_summary(self) -> None:
@@ -180,19 +178,22 @@ class DataJson:
         for i in range(3, self.inspections_count):
             all_inspections += self.inspections_sheet.cell(row=i, column=2).value
             all_patients += self.inspections_sheet.cell(row=i, column=3).value
-            all_discharges += self.inspections_sheet.cell(row=i, column=9).value
+            all_discharges += self.inspections_sheet.cell(row=i, column=8).value
         self._main_summary_json["value"] = all_inspections
         self._main_summary_json["children"][0]["value"] = all_patients
         self._main_summary_json["children"][0]["children"][0]["value"] = (
-                all_patients - self.main_summary_sheet.cell(row=6, column=9).value
+            self.main_summary_sheet.cell(row=4, column=2).value + self.main_summary_sheet.cell(row=5, column=2).value
         )
-        self._main_summary_json["children"][0]["children"][0]["children"][0]["value"] = \
-            self.main_summary_sheet.cell(row=6, column=8).value
+        self._main_summary_json["children"][0]["children"][0]["children"][0]["value"] = (
+            self.main_summary_sheet.cell(row=10, column=2).value +
+            self.main_summary_sheet.cell(row=13, column=2).value +
+            self.main_summary_sheet.cell(row=14, column=2).value
+        )
         self._main_summary_json["children"][0]["children"][0]["children"][1]["value"] = \
-            self.main_summary_sheet.cell(row=6, column=7).value
+            self.main_summary_sheet.cell(row=11, column=2).value
         self._main_summary_json["children"][0]["children"][1]["value"] = all_discharges
         self._main_summary_json["children"][0]["children"][2]["value"] = \
-            self.main_summary_sheet.cell(row=6, column=10).value
+            self.main_summary_sheet.cell(row=15, column=2).value
 
     def make_data(self) -> None:
         self._data_json = {
