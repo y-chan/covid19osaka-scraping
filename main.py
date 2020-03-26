@@ -21,7 +21,7 @@ class DataJson:
         self.main_summary_sheet = self.patients_and_inspections_file["【公開OK】ピポット集計"]
         self.contacts1_file = get_xlsx(config.contacts1_xlsx, "contacts1.xlsx")
         self.contacts1_sheet = self.contacts1_file["Sheet1"]
-        self.contacts2_file = get_xlsx(config.contacts2_xlsx, "contact2.xlsx")
+        self.contacts2_file = get_xlsx(config.contacts2_xlsx, "contacts2.xlsx")
         self.contacts2_sheet = self.contacts2_file["Sheet1"]
         self.patients_count = 3
         self.inspections_count = 3
@@ -35,7 +35,7 @@ class DataJson:
         self._contacts2_summary_json = {}
         self._treated_summary_json = {}
         self._main_summary_json = {}
-        self.last_update = str(datetime.today().astimezone(jst).strftime("%Y/%m/%d %H:%M"))
+        self.last_update = datetime.today().astimezone(jst).strftime("%Y/%m/%d %H:%M")
         self.get_patients()
         self.get_inspections()
         self.get_contacts1()
@@ -83,7 +83,7 @@ class DataJson:
 
     def make_patients(self) -> None:
         self._patients_json = {
-            "date": self.last_update,
+            "date": self.get_patients_last_update(),
             "data": []
         }
         for i in range(3, self.patients_count):
@@ -105,7 +105,7 @@ class DataJson:
 
     def make_patients_summary(self) -> None:
         self._patients_summary_json = {
-            "date": self.last_update,
+            "date": self.get_inspections_last_update(),
             "data": []
         }
 
@@ -118,7 +118,7 @@ class DataJson:
 
     def make_inspections_summary(self) -> None:
         self._inspections_summary_json = {
-            "date": self.last_update,
+            "date": self.get_inspections_last_update(),
             "data": []
         }
         for i in range(3, self.inspections_count):
@@ -130,7 +130,7 @@ class DataJson:
 
     def make_contacts1_summary(self) -> None:
         self._contacts1_summary_json = {
-            "date": self.last_update,
+            "date": self.get_contacts1_last_update(),
             "data": []
         }
 
@@ -143,7 +143,7 @@ class DataJson:
 
     def make_contacts2_summary(self) -> None:
         self._contacts2_summary_json = {
-            "date": self.last_update,
+            "date": self.get_contacts2_last_update(),
             "data": {
                 "府管轄保健所": [],
                 "政令中核市保健所": []
@@ -159,7 +159,7 @@ class DataJson:
 
     def make_treated_summary(self) -> None:
         self._treated_summary_json = {
-            "date": self.last_update,
+            "date": self.get_inspections_last_update(),
             "data": []
         }
 
@@ -182,18 +182,18 @@ class DataJson:
         self._main_summary_json["value"] = all_inspections
         self._main_summary_json["children"][0]["value"] = all_patients
         self._main_summary_json["children"][0]["children"][0]["value"] = (
-            self.main_summary_sheet.cell(row=4, column=2).value + self.main_summary_sheet.cell(row=5, column=2).value
+            self.main_summary_sheet.cell(row=5, column=2).value + self.main_summary_sheet.cell(row=6, column=2).value
         )
         self._main_summary_json["children"][0]["children"][0]["children"][0]["value"] = (
-            self.main_summary_sheet.cell(row=10, column=2).value +
-            self.main_summary_sheet.cell(row=13, column=2).value +
-            self.main_summary_sheet.cell(row=14, column=2).value
+            self.main_summary_sheet.cell(row=12, column=2).value +
+            self.main_summary_sheet.cell(row=14, column=2).value +
+            self.main_summary_sheet.cell(row=15, column=2).value
         )
         self._main_summary_json["children"][0]["children"][0]["children"][1]["value"] = \
-            self.main_summary_sheet.cell(row=11, column=2).value
+            self.main_summary_sheet.cell(row=13, column=2).value
         self._main_summary_json["children"][0]["children"][1]["value"] = all_discharges
         self._main_summary_json["children"][0]["children"][2]["value"] = \
-            self.main_summary_sheet.cell(row=15, column=2).value
+            self.main_summary_sheet.cell(row=16, column=2).value
 
     def make_data(self) -> None:
         self._data_json = {
@@ -206,6 +206,18 @@ class DataJson:
             "lastUpdate": self.last_update,
             "main_summary": self.main_summary_json()
         }
+
+    def get_patients_last_update(self) -> str:
+        return self.patients_sheet.cell(row=1, column=1).value.strftime("%Y/%m/%d %H:%M")
+
+    def get_inspections_last_update(self) -> str:
+        return self.inspections_sheet.cell(row=1, column=1).value.strftime("%Y/%m/%d %H:%M")
+
+    def get_contacts1_last_update(self) -> str:
+        return self.contacts1_sheet.cell(row=1, column=1).value.strftime("%Y/%m/%d %H:%M")
+
+    def get_contacts2_last_update(self) -> str:
+        return self.contacts2_sheet.cell(row=1, column=1).value.strftime("%Y/%m/%d %H:%M")
 
     def get_patients(self) -> None:
         while self.patients_sheet:
