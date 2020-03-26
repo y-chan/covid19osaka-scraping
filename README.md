@@ -11,9 +11,9 @@ json形式にまとめ、出力するスクリプトです。
 検査数に関する情報のExcelファイル([例](https://github.com/codeforosaka/covid19/files/4336742/default.xlsx))を`inspections.xlsx`とリネームし、
 このファイルがある階層に置きます。  
 (TODO: ファイルの公開場所が決定次第、自動で取得し生成するようにする)  
-その後、以下のスクリプトを実行すると`/data/data.json`が生成されます。~~
-Excelファイルの仮置き場がGoogle Driveに決定したので、取得から生成まで自動で実行するように移行しました。  
-取得元URLは[configファイル](config.py)で適宜変更出来ます。
+その後、以下のスクリプトを実行すると`/data/data.json`が生成されます。~~  
+元データとなるExcelファイルの保管場所がGoogle Driveに決定したので、取得から生成まで自動で実行するように移行しました。  
+必要に応じて、[configファイル](config.py)で取得元URLを変更出来ます。
 ```shell script
 pip install -r requirements.txt
 python3 main.py
