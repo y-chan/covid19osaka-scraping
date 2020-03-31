@@ -185,12 +185,11 @@ class DataJson:
             self.main_summary_sheet.cell(row=5, column=2).value + self.main_summary_sheet.cell(row=6, column=2).value
         )
         self._main_summary_json["children"][0]["children"][0]["children"][0]["value"] = (
-            self.main_summary_sheet.cell(row=12, column=2).value +
-            self.main_summary_sheet.cell(row=14, column=2).value +
+            self.main_summary_sheet.cell(row=13, column=2).value +
             self.main_summary_sheet.cell(row=15, column=2).value
         )
         self._main_summary_json["children"][0]["children"][0]["children"][1]["value"] = \
-            self.main_summary_sheet.cell(row=13, column=2).value
+            self.main_summary_sheet.cell(row=14, column=2).value
         self._main_summary_json["children"][0]["children"][1]["value"] = all_discharges
         self._main_summary_json["children"][0]["children"][2]["value"] = \
             self.main_summary_sheet.cell(row=16, column=2).value
